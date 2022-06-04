@@ -1,0 +1,158 @@
+{\rtf1\ansi\ansicpg1250\deff0\nouicompat\deflang1038{\fonttbl{\f0\fnil\fcharset0 Times New Roman;}{\f1\fnil\fcharset238 Times New Roman;}{\f2\fnil\fcharset2 Symbol;}}
+{\*\generator Riched20 10.0.18362}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\qc\b\f0\fs32\lang14 Bacskai Tam\'e1s - Am\f1\'f5ba programoz\f0\lang1033\'f3i dokument\'e1ci\'f3\b0\fs24\par
+
+\pard\sa200\sl276\slmult1\b\lang14 Bevezet\'e9s\b0\par
+A program a h\'edres am\f1\'f5ba j\f0\lang1033\'e1t\'e9kot futtatja grafikusan, SDL-el. A j\'e1t\'e9k 2. vil\'e1gh\'e1bor\'fas expoz\'edci\'f3ba lett helyezve, melyhez egyik kedvenc rts j\'e1t\'e9komb\'f3l (Company of Heroes) szedtem ikonokat, \'e9s h\'e1bor\'fas arch\'edv k\'e9pekkel, illusztr\'e1ci\'f3kkal val\'f3s\'edtottam meg. El\f1\'f5sz\f0\'f6r egy men\'fc k\'f6sz\'f6nt egy SDL ablakban bel\'e9p\'e9skor, ahol az al\'e1bbi opci\'f3k lesznek l\'e1that\'f3ak: "Start", "Load", "Kil\'e9p\'e9s".\par
+\b\lang14 Main fgv.\b0\par
+Ide be vannak "include"-olva a m\'e1sik 3 modul header f\'e1jljai (j\'e1t\'e9k modul, men\'fc modul, adatszerkezetes \'e9s megjelen\'edt\'e9s modul: innent\f1\'f5l csak adatszerkezetek).\par
+\f0 Itt van t\'e1rolva az SDL_Window, SDL_Renderer, TTF_Font pointerek, a Men\'fc \'e9s a j\'e1t\'e9k gombjait, h\'e1tter\'e9t le\'edr\'f3 SDL_Rect objektumok, a cell\'e1kat t\'e1rol\'f3 k\'e9t dimenzi\'f3s dinamikusan foglalt t\'f6mb, a t\'e1bla oldal\'e1nak hossza cell\'e1kban, a k\'f6vetkez\f1\'f5 j\f0\lang1033\'e1t\'e9kos t\'e1rol\'e1s\'e1ra alkalmas v\'e1ltoz\'f3 \'e9s az event loopok folytonos fut\'e1s\'e1t garant\'e1l\'f3 egyedi strukt\'fara t\'edpus. (t\'f6bbet ezekr\f1\'f5l: l\f0\'e1sd.: adatszerkezetek modul le\'edr\'e1sa)\par
+\lang14 Az eventekn\'e9l megh\'edvja a jatek es menu modulok code r\'e9sz\'e9ben tal\'e1lhat\'f3 menu loop es jatek loop fgv.-eket\par
+\b Adatszerkezetek \'e9s megjelen\'edt\'e9s modul\b0\par
+Az adatszerkezetek modul tartalmazza az alap k\'f6nyvt\'e1rak megh\'edv\'e1sait (SDL2/SDL.h; stdbool.h; SDL2/SDL_ttf.h; string.h; valamint a debugmalloc k\'f6nyt\'e1rakat is), \'e9s ez a modul meg van h\'edvva a men\'fc \'e9s j\'e1t\'e9k modulokban is a mainen k\'edv\'fcl, ugyanis az itt l\'e9v\f1\'f5 f\f0\lang1033\'fcggv\'e9nyek \'e9s adatszerkezetek t\'f6bb modulvan is sz\'fcks\'e9gesek.\par
+\lang14 Itt tal\'e1lhat\'f3ak tov\'e1bb\'e1 az egyedi adatszerkezet elemei is:\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 "babu": enum, amelyet az adott cell\'e1kban l\'e9v\f1\'f5 b\f0\lang1033\'e1bu, valamint a j\'e1t\'e9kban k\'f6vetkez\f1\'f5 j\f0\'e1t\'e9kos k\'f3d\'f3l\'e1s\'e1nak egy\'e9rtelm\'fcs\'edt\'e9s\'e9hez haszn\'e1ltam, teh\'e1t \'e9rt\'e9kei 0 = "semmi", 1 = "iksz", 2 = "kor".\par
+{\pntext\f2\'B7\tab}\lang14 "Cella": strukt\'fara t\'edpus, amely az egyes cell\'e1knak a hely\'e9t \'e9s az abban l\'e9v\f1\'f5 b\f0\lang1033\'e1bu tartalm\'e1t ("tartalma") hivatott elt\'e1rolni, el\f1\'f5bbit a "pozicio" nev\'fb SDL_Rect objektumk\f0\'e9nt, ut\'f3bbit az el\f1\'f5bb kifejtett babu enum seg\f0\'edts\'e9g\'e9vel.\par
+{\pntext\f2\'B7\tab}\lang14 "IsRunning": egyedi strukt\'fara: 3 bool v\'e1ltoz\'f3val rendelkezik, amelyek sorra: "program": ha igaz akkor a main-en bell\'fcl a f\f1\'f5 event loop folyamatosan lefut, azaz fut a program, "game": ez hasonl\f0\lang1033\'f3an m\'fck\'f6dik mint a "program" csak \'e9ppen a j\'e1t\'e9k fut\'e1s\'e1t determin\'e1lja, "menu": ugyanez, csak a men\'fcre.\par
+{\pntext\f2\'B7\tab}\lang14 "Menu_gombok": egyedi strukt\'fara, 4 db SDL_Rect objektumban t\'e1rolja a "start" gomb hely\'e9t, a "load" gomb hely\'e9t, az "exit" gomb hely\'e9t, \'e9s a "background" azaz a h\'e1tt\'e9r objektumot, amelyre \'edgy egy SDL_Texture objektum "r\'e1h\'fazhat\'f3", \'edgy h\'e1tteret adva az ablaknak\par
+{\pntext\f2\'B7\tab}"Jatek_gombok": szint\'e9n strukt\'fara t\'edpus 3db SDL_Rect objektummal: "exit" a j\'e1t\'e9k ablakon bel\'fcli kil\'e9p\'e9s gomb hely\'e9nek meghat\'e1roz\'e1s\'e1hoz, "save" szint\'e9n a j\'e1t\'e9kon bel\'fcli ment\'e9s gomb hely\'e9nek le\'edr\'e1s\'e1hoz, "background" az el\f1\'f5bb kifejtett m\f0\lang1033\'f3don a h\'e1tt\'e9rhez\par
+
+\pard\sa200\sl276\slmult1\lang14 Itt tal\'e1lhat\'f3 f\'fcggv\'e9nyek:\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 void sdl_init: az SDL inicializ\'e1ci\'f3j\'e1t v\'e9gzni az SDL_Init SDL fgv. seg\'edts\'e9g\'e9vel\par
+{\pntext\f2\'B7\tab} void ttf_font_init: inicializ\'e1l egy TTF_Font objektumot, param\'e9terk\'e9nt kap: egy TTF_Font objektumra mutat\'f3 mutat\'f3t\par
+{\pntext\f2\'B7\tab}statikus void sdl_window_init: l\'e9trehoz egy SDL_Window objektumot, param\'e9terk\'e9nt kap: constants sztringet, ami az ablak felirata lesz, egy "szeles" integert \'e9s egy "magas" integert, amelyek az ablak szelessege \'e9s magassaga lesznek, valamint egy SDL_Window objektumra mutat\'f3 mutat\'f3j\'e1t\par
+{\pntext\f2\'B7\tab}statikus void sdl_renderer_init: l\'e9trehoz egy SDL_Renderer objektumot, param\'e9terk\'e9nt kap: SDL_Window objektumra mutat\'f3 mutat\'f3j\'e1t, SDL_Renderer objektumra mutat\'f3 mutat\'f3j\'e1t\par
+{\pntext\f2\'B7\tab}void defining: l\'e9trehoz egy \'faj SDL_Window-ot \'e9s egy \'faj SDL_Renderer-t az el\f1\'f5z\'f5 kett\'f5 statikus fgv. seg\f0\lang1033\'edts\'e9g\'e9vel, param\'e9terk\'e9nt kap: az el\f1\'f5z\'f5 k\f0\'e9t fgv param\'e9tereit\par
+{\pntext\f2\'B7\tab}\lang14 bool input_text az infoC-r\f1\'f5l szerzett fgv. amely lehet\'f5v\f0\lang1033\'e9 teszi, h egy sdl ablakban olvassunk be adatokat, visszat\'e9r\'e9si \'e9rt\'e9ke, h sikeresen lefutott-e vagy sem, param\'e9terk\'e9nt kap:\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-426\li1562\sa200\sl276\slmult1\lang14 egy c\'e9lsztringet, amelybe \'edr\'f3dik majd a bej\'f6tt adat\par
+{\pntext\f2\'B7\tab}egy size t hosszt, amely a maxim\'e1lis sz\'f6veg hossza, amit ki tud \'edrni a SDL_Rect objektumba\par
+{\pntext\f2\'B7\tab}SDL_Rect teglalap: SDL_Rect objektum: a helye ahova majd ker\'fcl a bek\'e9r\f1\'f5 doboz\par
+{\pntext\f2\'B7\tab}\f0 SDL_Color hatter, SDL_Color szovegszin: a teglalap szine, szovegszin pedig a teglalapban megjeleno szoveg szine\par
+{\pntext\f2\'B7\tab}font: betutipus amelyel irni fog majd a teglalapba\par
+{\pntext\f2\'B7\tab}SDL_Renderer mutat\'f3 \par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 void jatek_ablak_letrehozasa: ez a fgv felszabad\'edtja az el\f1\'f5z\'f5 SDL_Window \f0\lang1033\'e9s SDL_Renderer-t \'e9s \'fajakat defini\'e1l a "defining" fgv seg\'edts\'e9g\'e9vel, az \'faj ablak m\'e9ret\'e9nek kisz\'e1mol\'e1s\'e1hoz seg\'edt a cella m\'e9reteit \'e1lland\'f3k\'e9nt definolt "CELLSIZE" (cella m\'e9ret), amely alap\'e9rtelmezett \'e9r\'e9tke n\'e1lam 25, t\'e9nyleges rajzol\'e1st nem v\'e9gez, param\'e9terk\'e9nt kap: \par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-426\li1562\sa200\sl276\slmult1\lang14 SDL_Window \'e9s SDL_Renderer mutat\'f3k mutat\'f3it\par
+{\pntext\f2\'B7\tab}Jatek_gombok mutato, amelyek derefer\'e1l\'e1s\'e1val v\'e1ltoztathat\'f3, hogy hova ker\'fcljenek a gombok az uj ablakon\par
+{\pntext\f2\'B7\tab}"table_size" (t\'e1bla_m\'e9ret) v\'e1ltoz\'f3t, amely szint\'e9n seg\'edt kisz\'e1molni az ablak m\'e9ret\'e9t \'fagy, hogy minden cella \'e9s a j\'e1t\'e9k gombjai (amiket szint\'e9n ez a fgv. sz\'e1mol ki) r\'e1f\'e9rjenek\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 void jatek_gombok_megrajzolasa: SDL_Texture objektum mutat\'f3kat hoz l\'e9tre \'e9s inicializ\'e1l az sdl IMG_LoadTexture fgv-\'e9vel, aminek megadja az "images" mapp\'e1n t\'e1rolt k\'e9peket, ezut\'e1n ezeket az SDL_RenderCopy fgv seg\'edts\'e9g\'e9vel r\'e1helyezi az SDL_Rect objektumokra, majd felszabaditja a texturakat \'e9s v\'e9g\'fcl az SDL_RenderPresent fgv.-el kirajzolja \f1\'f5ket, param\f0\lang1033\'e9terk\'e9nt kap:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-426\li1562\sa200\sl276\slmult1\b0\lang14 SDL_Renderer-re mutat\'f3 mutat\'f3t, amelynek nem lenne sz\'fcks\'e9ges, hogy k\'e9tszeres indirekci\'f3t haszn\'e1ljon, de mivel a loopokban lesz ez a f\'fcggv\'e9ny megh\'edvva, ez\'e9rt a f\'fcggv\'e9nyh\'edv\'e1sok \'e1tl\'e1that\'f3s\'e1g\'e1\'e9rt \'edgy adtam \'e1t \f1\'f5ket, amely minden minden loopb\f0\lang1033\'f3l h\'edvott fgv.-re \'edgy van\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 Jatek_gombokra mutat\'f3 mutat\'f3\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 void mentes_betoltes_nev_beker: feladata, hogy ment\'e9sn\'e9l \'e9s bet\'f6lt\'e9sn\'e9l a n\'e9v bek\'e9r\'e9s\'e9\'e9rt sz\'fcks\'e9ges ablakot l\'e9trehozza majd onnan bek\'e9rje a nevet \'e9s el\'e9 f\'fczze, hogy "saves/" ugyanis k\'fcl\'f6n mapp\'e1ban t\'e1rolom a ment\'e9seket, param\'e9terk\'e9nt kap:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-426\li1562\sa200\sl276\slmult1\b0 SDL_Window mutat\'f3 mutat\'f3t, SDL_Renderer mutat\'f3 mutat\'f3t, amelyeket odaad majd a defining fgv-nek, amely l\'e9trehozza az \'faj ablakot az \'e1lland\'f3k\'e9nt definolt WINDOW_WIDTH \'e9s WINDOW_HEIGHT\b\par
+{\pntext\f2\'B7\tab}\b0 TTF_Font mutat\'f3 az input_text fgv.-nek\b\par
+{\pntext\f2\'B7\tab}\b0 sztring mutat\'f3, amibe a mentes/betoltes txt f\'e1jl neve ker\'fcl majd\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b0 void jatek_tabla_betoltes:  a jatek_ablak_letrehozas es a jatek_gombok_megrajzolasa fgv.-ek seg\'edts\'e9g\'e9vel l\'e9trehoz egy ablakot \'e9s megrajzolja benne a gombokat, majd ez a fgv. megrajzolja benne a t\'e1bl\'e1t, illetve, a katon\'e1k helyeit ahol vannak a gombok megrajzol\'e1s\'e1hoz hasonl\'f3 m\'f3don, param\'e9terk\'e9nt kap:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-426\li1562\sa200\sl276\slmult1\b0 SDL_Window, SDL_Renderer az ablak l\'e9trehoz\'e1sa v\'e9gett\b\par
+{\pntext\f2\'B7\tab}\b0 Cella *** a dinamikusan foglalt cellak (**) mutat\'f3ja felt\'e9telezve itt m\'e1r fel van t\'f6ltve a bet\'f6lt\'f6tt ment\'e9ssel vagy a ment\'e9s ut\'e1n m\'e9g benne vannak a cell\'e1k adatai \'e9s ki tudja rajzolni \'fajra a t\'e1bl\'e1t miut\'e1n a felhaszn\'e1l\'f3 v\'e9gzett a ment\'e9ssel\b\par
+{\pntext\f2\'B7\tab}\b0 Jatek_gombok mutat\'f3 a kirajzol\'e1s miatt\b\par
+{\pntext\f2\'B7\tab}\b0 integer mutato, szinten a kirajzol\'e1s miatt, valamint a cellak bej\'e1r\'e1s\'e1hoz\b\par
+
+\pard\sa200\sl276\slmult1 Men\'fc modul\par
+\b0 void menu_loop a menu funkci\'f3it tartalmazza, param\'e9terei:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-426\li789\sa200\sl276\slmult1\b0 SDL_Window, SDL_Renderer mutat\'f3ra mutat\'f3 mutat\'f3k \'faj ablakok el\f1\'f5\f0\lang1033\'e1ll\'edt\'e1sa miatt sz\'fcks\'e9ges, m\'e9ghozz\'e1 2x-es indirekci\'f3val\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 IsRunning ra mutat\'f3, az\'e9rt hogy a fut\'e1si \'e1llapotot be tudjuk foly\'e1solni: kil\'e9p\'e9sn\'e9l kil\'e9pjen, j\'e1t\'e9k kezdet\'e9n\'e9l a men\'fcb\f1\'f5l ki- a j\f0\lang1033\'e1t\'e9kba be l\'e9pjen\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 SDL_Event objektum, az SDL_WaitEvent fgv.-el eventre v\'e1runk, ezzel tudjuk a gombokra val\'f3 kattint\'e1st, vagy majd a j\'e1t\'e9kn\'e1l a cell\'e1kra kattint\'e1st \'e9rz\'e9kelni\b\par
+{\pntext\f2\'B7\tab}\b0 Menu_gombok strukt\'fara p\'e9ld\'e1ny, ennek seg\'edts\'e9g\'e9vel tudjuk \'e9rz\'e9kelni, hogy az adott katttint\'e1s a men\'fc melyik gombj\'e1ra \'e9rkezett\b\par
+{\pntext\f2\'B7\tab}\b0 Jatek_gombok pointer, amit derefer\'e1lva majd meg tudjuk adni egyes gomboknak, illetve a h\'e1tt\'e9rnek a poz\'edci\'f3j\'e1t, amit tudnunk kell v\'e1ltoztatni, ugyanis a cell\'e1k sz\'e1maihoz igazodik a p\'e1lya, amivel egy\'fctt a h\'e1tt\'e9r \'e9s a gombok is, ez\'e9rt mutat\'f3\b\par
+{\pntext\f2\'B7\tab}\b0 int pointer table_size a t\'e1bla m\'e9ret\'e9nek t\'e1rol\'e1s\'e1ra, ennek manipul\'e1l\'e1s\'e1nak \'e9rdek\'e9ben ezt is c\'edm szerint adjuk \'e1t\b\par
+{\pntext\f2\'B7\tab}\b0 babu pointer kovetkezo_jatekos amely a kovetkezo jatekos megjegyz\'e9se miatt van, \'e9s bet\'f6lt\'e9sn\'e9l van szerepe, ugyanis a ment\'e9s tartalmazza, hogy melyik j\'e1t\'e9kos k\'f6vetkezett a ment\'e9s idejekor\b\par
+{\pntext\f2\'B7\tab}\b0 TTF_Font mutat\'f3 az input_text fgv indirekt megh\'edv\'e1sai miatt van r\'e1 sz\'fcks\'e9g\b\par
+
+\pard\sa200\sl276\slmult1\b0 main_loopon bel\'fcli statikus void fgv.-ek:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b0 palyameret_megadas: bek\'e9ri a k\'e9sz\'edtend\f1\'f5 p\f0\lang1033\'e1lya m\'e9ret\'e9t, majd "\'e1tkonvert\'e1lja" integerbe azt, \'fcgyelve, hogy az minimum 5 legyen, valamint rendelkezik egy felt\'e9tellel, hogy a cellak inicializaltak-e, ha igen, akkor el\'f6sz\'f6r felszabad\'edtja azokat, hogy ne legyen mem\'f3ria sziv\'e1r\'e1g\'e1s. FIGYELEM: konvert\'e1l\'e1sn\'e1l a be\'edrt karakterek ascii k\'f3dja adja a karakter "konvert\'e1lt" verzi\'f3j\'e1t.\b  \b0 param\'e9terei:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-474\li1578\sa200\sl276\slmult1\b0\lang14 SDL_Renderer mutat\'f3ra mutat\'f3 itt csup\'e1n az ablak t\'f6rl\'e9s\'e9ben van szerepe, hogy a men\'fc gombjait elt\'e1vol\'edtsa onnan\b\par
+{\pntext\f2\'B7\tab}\b0 integer mutat\'f3 table_size: derefer\'e1lva azt el\'e9rhet\f1\'f5 \f0\lang1033\'e9s m\'f3dos\'edthat\'f3 a p\'e1lya m\'e9ret\'e9nek \'e9rt\'e9ke\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 Cella *** cellak: l\'e1sd.: fenti le\'edr\'e1s\b\par
+{\pntext\f2\'B7\tab}\b0 TTF_Font mutat\'f3 az input_text fgv. miatt\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b0 uj_jatek: lefoglalja a kupacon a sz\'fcks\'e9ges mem\'f3ria-ter\'fcletet, m\'e9gpedig \'fagy, hogy el\f1\'f5sz\f0\lang1033\'f6r egy table_size * sizeof(Cella *) ter\'fcletet foglal, majd pedig ennek a pointer t\'f6mbnek az els\f1\'f5 hely\f0\'e9re egy table_size * table_size * sizeof(Cella) ter\'fcletet, amit ut\'e1na egy ciklussal feloszt table_size-nyi r\'e9szekre. FIGYELEM: a table_size param\'e9tert derefer\'e1lni kell, hogy az \'e9rt\'e9k\'e9t kapjuk meg. Ezut\'e1n a jatek_ablak_letrehozas \'e9s a jatek_gombok_megrajzolasa fgv.-ek seg\'edts\'e9g\'e9vel megrajzolja a jat\'e9k ablak\'e1t, param\'e9terei:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-474\li1578\sa200\sl276\slmult1\b0\lang14 SDL_Window, SDL_Renderer mutat\'f3kra mutat\'f3 mutat\'f3k, amelyeket \'e1tadva az el\f1\'f5bb eml\f0\lang1033\'edtett fgv.-eknek megrajzolj\'e1k az \'faj ablakot\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 Cella *** cellak: l\'e1sd.: a fenti le\'edr\'e1sban\b\par
+{\pntext\f2\'B7\tab}\b0 J\'e1t\'e9k_gombok pointer: ezt is odaadja a rajzol\'f3 fgv.-eknek\b\par
+{\pntext\f2\'B7\tab}\b0 int * table_size: felt\'e9telezve, hogy ebben m\'e1r benne van a k\'e9sz\'edtend\f1\'f5 t\f0\lang1033\'e1bla m\'e9rete, ennek seg\'edts\'e9g\'e9vel osztja fel a cellak pointer tombjet\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b0\lang14 betoltes: bek\'e9r egy nevet a mentes_betoltes_nev_beker fgv.-el, majd megnyitja a bet\'f6ltend\f1\'f5 f\f0\lang1033\'e1jlt, itt is figyeli, h meg tudja-e nyitni a f\'e1jlt, ha nem hib\'e1t dob, ha igen, akkor azt is ellen\f1\'f5rzi, hogy inicializ\f0\'e1lt-e m\'e1r a cellak, ha igen felszabad\'edtja, majd beolvassa az adatokat: el\f1\'f5sz\f0\'f6r a table_size-t majd a kovetkezo_jatekost, utana megh\'edvja az uj_jatek fgv.-t, veg\'fcl beolvassa a cellak adatait, bez\'e1rja a f\'e1jlt \'e9s l\'e9trehozza a t\'e1bl\'e1t, param\'e9terei:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-474\li1578\sa200\sl276\slmult1\b0\lang14 window, renderer: az \'faj ablak l\'e9trehoz\'e1sa miatt\b\par
+{\pntext\f2\'B7\tab}\b0 cellak: felt\'f6lti \f1\'f5ket a bet\f0\lang1033\'f6lt\'f6tt f\'e1jl cell\'e1inak adataival, azaz, hogy mi a tartalmuk (tartalma), majd az pozicio x, y, w, h tagjait, ezek ';'-jellel elv\'e1lasztva vannak a txt-ben\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 Jatek_gombok *: az \'faj ablak miatt\b\par
+{\pntext\f2\'B7\tab}\b0 int * table_size: hogy \'e1tirhassuk a bet\'f6ltend\f1\'f5 f\f0\lang1033\'e1jlban t\'e1rolt t\'e1bla m\'e9ret\'e9re\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 babu * kovetkezo_jatekos: hogy \'e1t\'edrhassuk ezt is\b\par
+{\pntext\f2\'B7\tab}\b0 TTF_Font *: az input_text miatt\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b0 uj_jatek_tabla_megrajzolas: \'fcres mez\f1\'f5kkel felt\f0\lang1033\'f6lti az \'faj t\'e1bl\'e1t, \'e9s ki is rajzolja \f1\'f5ket, param\f0\'e9terek:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-474\li1578\sa200\sl276\slmult1\b0\lang14 renderer: rajzol\'e1shoz\b\par
+{\pntext\f2\'B7\tab}\b0 cellak: felt\'f6lti az \f1\'f5 "tartalma" v\f0\lang1033\'e1ltoz\'f3ikat "semmi"-kel\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 table_size: m\'e1trix bej\'e1r\'e1s\'e1hoz sz\'fcks\'e9ges\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b0 kilepes: csak az isRunning strukt\'far\'e1t \'e1ll\'edtja \'e1t, hogy le\'e1lljon a program, csup\'e1n az \'e1tl\'e1that\'f3s\'e1g \'e9s szimmetria kedv\'e9\'e9rt van fgv.-ben, param\'e9te: IsRunning * isRunning\b\par
+
+\pard\sa200\sl276\slmult1 J\'e1t\'e9k modul\par
+\b0 menu_gombok_megrajzolasa fgv.-e megrajzolja a menu gombjait \'e9s a h\'e1tteret, \f1\'f5 a header f\f0\lang1033\'e1jlban is "hirdetve" van, ugyanis a mainben legels\f1\'f5k\f0\'e9nt meg kell rajzolni a men\'fct a loopokon k\'edv\'fcl, param\'e9terei: SDL_Renderer * renderer (ez csak 1x-es indirekci\'f3!): megrajzol\'e1sban van szerepe, Menu_gombok menu_gombok: menu gombjainak helye (ez nem pointer, ezeknek helyei, \'e1lland\'f3)\par
+\lang14 void jatek_loop a j\'e1t\'e9k funkci\'f3it tartalmazza, param\'e9terei:\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-474\li789\sa200\sl276\slmult1 SDL_Window, SDL_Renderer **: rajzol\'e1sban \'e9s \'faj ablak l\'e9trehoz\'e1s\'e1n\'e1l van szerep\'fck \'e9s ut\'f3bbi miatt fontos a 2x-es indirekcio\b\par
+{\pntext\f2\'B7\tab}\b0 IsRunning * isRunning: itt is, mint a men\'fcben fontos, hogy lehessen v\'e1ltoztatni, ez\'e9rt c\'edm szerint van \'e1tadva\b\par
+{\pntext\f2\'B7\tab}\b0 SDL_Event ev: szint\'fagy mint a men\'fcn\'e9l\b\par
+{\pntext\f2\'B7\tab}\b0 Cella *** cellak: pointert\'f6mb, amiben pointerek vannak, \'e1tadva pointerk\'e9nt, a manipul\'e1lsra val\'f3 ig\'e9ny miatt sz\'fcks\'e9ges a 3x-os indirekci\'f3\b\par
+{\pntext\f2\'B7\tab}\b0 Menu_gombok menu_gombok: poz\'edci\'f3juk \'e1lland\'f3, nem ig\'e9nylik az indirekci\'f3t\b\par
+{\pntext\f2\'B7\tab}\b0 Jatek_gombok jatek_gombok: helyzet\'fck az ablak m\'e9ret\'e9t\f1\'f5l f\f0\lang1033\'fcgg\f1\'f5, ak\f0\'e1rcsak a men\'fcn\'e9l\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 int * table_size: manupul\'e1l\'e1sa nem sz\'fcks\'e9ges, de az egys\'e9gess\'e9g kedv\'e9\'e9rt pointerk\'e9nt van \'e1tadva, ugyanis m\'e1s fgv.-ekn\'e9l, amit a men\'fc modul is haszn\'e1l egyszer\f1\'fbbb pointerk\f0\lang1033\'e9nt \'e1tadni\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 babu * kovetkezo_jatekos: v\'e1ltoztat\'e1sa fontos, a j\'e1t\'e9k elem\'e9t k\'e9pzi, ugyanis egym\'e1st v\'e1ltj\'e1k a j\'e1t\'e9kosok l\'e9p\'e9sei\b\par
+{\pntext\f2\'B7\tab}\b0 TTF_Font * font: az input_text fgv.-ek miatt  fontos\b\par
+
+\pard\sa200\sl276\slmult1\b0 jatek_loop bel\'fcli statikus void fgv.-ek:\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 mentes: mentes_betoltes_nev_beker fgv.-el bek\'e9r egy nevet, majd arra a n\'e9vre egy txt f\'e1jlba elmenti a j\'e1t\'e9k\'e1ll\'e1st: el\f1\'f5sz\f0\lang1033\'f6r bele\'edrja a table_size derefer\'e1lt \'e9rt\'e9k\'e9t, majd a kovetkezo_jatekos \'e9rt\'e9k\'e9t (l\'e1sd.: adatszerk.), ut\'e1na a cellak-at egyszer derefer\'e1lva a m\'e1trix adatait (l\'e1sd.: menu_loop -> beoltes), majd bez\'e1rja a f\'e1jlt, \'e9s a jatek_tabla_betoltes fgv.-el \'fajra gener\'e1lja a t\'e1bl\'e1t, param\'e9terek:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-474\li1578\sa200\sl276\slmult1\b0\lang14 window, renderer: ablak k\'e9sz\'edt\'e9s miatt\b\par
+{\pntext\f2\'B7\tab}\b0 Cella *** cellak: az adatok be\'edr\'e1sa miatt\b\par
+{\pntext\f2\'B7\tab}\b0 Jatek_gombok * jatek_gombok: a t\'e1bla \'fajragener\'e1l\'e1sa miatt a ment\'e9s v\'e9geszt\'e9vel\b\par
+{\pntext\f2\'B7\tab}\b0 int * table_size: a cellak bej\'e1r\'e1s\'e1hoz, valamint a ment\'e9s folyamat\'e1hoz kell\b\par
+{\pntext\f2\'B7\tab}\b0 babu * kovetkezo_jatekos: ment\'e9shez sz\'fcks\'e9ges\b\par
+{\pntext\f2\'B7\tab}\b0 TTF_Font * font: input_text miatt kell (ami indirekten a mentes_beoltes_nev_beker-en kereszt\'fcl van)\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b0 win_screen: felszabad\'edtja a window-t \'e9s a renderer-t, majd a kil\'e9p\'e9s gombok kih\'fazza az eg\'e9sz k\'e9perny\f1\'f5re, azt\f0\lang1033\'e1n a kil\'e9p\'e9s gombra r\'e1h\'fazza az \'e9ppen gy\f1\'f5zedelmeskedett f\f0\'e9l gy\f1\'f5zelmi k\f0\'e9p\'e9t, amelyet szint\'e9n az "images" mapp\'e1b\'f3l szed \'e9s a gombokhoz hasonl\'f3 m\'f3don hajt v\'e9gre, majd ezt kirajzolja, param\'e9terek:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-474\li1578\sa200\sl276\slmult1\b0\lang14 window, renderer: \'faj ablak miatt\b\par
+{\pntext\f2\'B7\tab}\b0 Jatek_gombok * jatek_gombok: "exit" kil\'e9p\'e9s gomb m\f1\'fbveletei miatt\b\par
+{\pntext\f2\'B7\tab}\b0\f0 babu * kovetkezo_jatekos: gy\f1\'f5ztes meghat\f0\lang1033\'e1roz\'e1s\'e1hoz kell\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b0\lang14 win_detect: felismeri ha egy j\'e1t\'e9kosnak 5 katon\'e1ja van egym\'e1s mellett \'e9s akkor megh\'edvja a win_screen fgv.-t, param\'e9terek:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-474\li1578\sa200\sl276\slmult1\b0 window, renderer: a winscreen megh\'edv\'e1sa miatt fontos\b\par
+{\pntext\f2\'B7\tab}\b0 cellak: a felismer\'e9shez sz\'fcks\'e9ges\b\par
+{\pntext\f2\'B7\tab}\b0 jatek_gombok: win_screen-nek kell\b\par
+{\pntext\f2\'B7\tab}\b0 table_size: detekt\'e1l\'e1shoz kell\b\par
+{\pntext\f2\'B7\tab}\b0 kovetkezo_jatekos: felismer\'e9shez \'e9s a win_screenhez is kell\b\par
+{\pntext\f2\'B7\tab}\b0 int s, int o: \'e9ppen vizsg\'e1lt cella, ehhez k\'e9pest n\'e9zi meg, hogy van-e mellette m\'e1sik 4, a gy\f1\'f5zelem \f0\lang1033\'e9rdek\'e9ben\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b0\lang14 hit_detect: egy kattint\'e1s ut\'e1n van megh\'edvva, ha az nem a kil\'e9p\'e9sre, vagy a ment\'e9sre \'e9rkezett, megn\'e9zi, hogy ha cell\'e1ba, akkor melyikbe \'e9rkezett a kattint\'e1s, majd oda helyezi a k\'f6vetkez\f1\'f5 j\f0\lang1033\'e1t\'e9kos katon\'e1j\'e1t, majd ezut\'e1n megh\'edvja a win_detect fgv.-t, ezut\'e1n pedig \'e1tv\'e1ltja a kovetkez\f1\'f5 j\f0\'e1t\'e9kos v\'e1ltoz\'f3j\'e1t, hogy \f1\'f5 j\f0\'f6jj\'f6n, param\'e9terek:\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-474\li1578\sa200\sl276\slmult1\b0\lang14 window, renderer: win_detect-nek sz\'fcks\'e9ges\b\par
+{\pntext\f2\'B7\tab}\b0 ev: a detekt\'e1l\'e1shoz sz\'fcks\'e9ges\b\par
+{\pntext\f2\'B7\tab}\b0 cellak: a felismer\'e9shez sz\'fcks\'e9ges ez is\b\par
+{\pntext\f2\'B7\tab}\b0 jatek_gombok: win_screen-nek sz\'fcks\'e9ges (indirekt modon megkapja a win_detect is)\b\par
+{\pntext\f2\'B7\tab}\b0 table_size: cellak bej\'e1r\'e1s\'e1hoz sz\'fcks\'e9ges,\b\par
+{\pntext\f2\'B7\tab}\b0 kovetkezo_jatekos: katona lehelyez\'e9s, k\'f6r v\'e1lt\'e1s, win_detect, win_screen, mindnek fontos\b\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent360{\pntxtb\'B7}}\fi-474\li789\sa200\sl276\slmult1\b0 kilepes: kil\'e9p a j\'e1t\'e9kb\f1\'f5l \f0\lang1033\'e9s \'fajra nyitja a men\'fct, param\'e9terek: window, renderer: \'faj ablakhoz, rajzol\'e1shoz; isRunning: j\'e1t\'e9k le\'e1ll\'edt\'e1s\'e1hoz, men\'fc \'fajranyit\'e1s\'e1hoz; menu_gombok: men\'fc kirajzol\'e1s\'e1hoz\b\par
+{\pntext\f2\'B7\tab}\b0\lang14 asd\b\par
+}
+ 
